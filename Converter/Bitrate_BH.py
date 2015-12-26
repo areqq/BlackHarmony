@@ -1,9 +1,9 @@
-# for crash & http://blackharmony.pl/ by areq 2015-12-13 http://areq.eu.org/
+# for crash & http://blackharmony.pl/ by areq 2015-12-28 http://areq.eu.org/
 
 from enigma import eConsoleAppContainer, eTimer, iServiceInformation
 from Components.Converter.Converter import Converter
 from Components.Element import cached
-import os
+import os, os.path
 
 class Bitrate_BH(Converter, object):
 
@@ -15,6 +15,7 @@ class Bitrate_BH(Converter, object):
         self.container.dataAvail.append(self.dataAvail)
         self.timer = eTimer()
         self.timer.callback.append(self.start)
+        self.vti = os.path.exists("/usr/lib/enigma2/python/Plugins/SystemPlugins/VTIPanel/")
 
     @cached
     def getText(self):
@@ -24,7 +25,6 @@ class Bitrate_BH(Converter, object):
     text = property(getText)
 
     def doSuspend(self, suspended):
-        #print "bitrate class doSuspend", suspended
         if suspended == 0:
             self.running = 1
             self.start()
@@ -35,27 +35,28 @@ class Bitrate_BH(Converter, object):
     def start(self):
         if self.source.service and self.running == 1:
             demux = 2
+            adapter = 0 
             try:
                 stream = self.source.service.stream()
                 if stream:
                     streamdata = stream.getStreamingData()
                     if streamdata and 'demux' in streamdata:
                         demux = streamdata['demux']
+                    if streamdata and 'adapter' in streamdata:
+                        adapter = streamdata['adapter']
             except:
                 pass
             info = self.source.service.info()
             vpid = info.getInfo(iServiceInformation.sVideoPID)
             apid = info.getInfo(iServiceInformation.sAudioPID)
             if vpid >= 0 and apid >= 0:
-                cmd = 'bitrate %i %i %i' % ( demux, vpid, vpid )
-                print "bitrate class start", cmd
+                if self.vti:
+                     adapter = ''
+                cmd = 'bitrate %s %i %i %i' % ( str(adapter), demux, vpid, apid )
                 self.running = 2
                 os.system('killall -9 bitrate > /dev/null 2>&1')
                 self.container.execute(cmd)
-        else:
-           print "bitrate class start po else", self.source.service, self.running
         if self.running == 1:
-            #print "bitrate class setup timer"
             self.timer.start(300, True)
 
     def clearValues(self):
@@ -67,7 +68,6 @@ class Bitrate_BH(Converter, object):
 
     def appClosed(self, retval):
         self.clearValues()
-        print "bitrate class bitrateStopped", retval
 
     def dataAvail(self, str):
         str = self.remainingdata + str
@@ -88,5 +88,5 @@ class Bitrate_BH(Converter, object):
             except:
                 print "bitrate class dataAvail except"
             self.datalines = []
-            #print "bitrate class new data"
             Converter.changed(self, (self.CHANGED_POLL,))
+
