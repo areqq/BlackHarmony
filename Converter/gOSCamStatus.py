@@ -35,11 +35,11 @@ class gOSCamStatus(Converter, object):
     def __init__(self, type):
         Converter.__init__(self, type)
         gOSCamStatus.count=gOSCamStatus.count+1
-    self.running = 0
-    if type == "Servers":
-        self.type = self.SERVERS
-    elif type == "Clients":
-        self.type = self.CLIENTS
+        self.running = 0
+        if type == "Servers":
+            self.type = self.SERVERS
+        elif type == "Clients":
+            self.type = self.CLIENTS
 #       if gOSCamStatus.DynamicTimer is None:
 #           gOSCamStatus.DynamicTimer = eTimer()
 #           gOSCamStatus.DynamicTimer.callback.append(self.getData)
